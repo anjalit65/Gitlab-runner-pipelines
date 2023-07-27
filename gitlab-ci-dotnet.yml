@@ -1,0 +1,98 @@
+stages:
+  - build
+  - test
+  - quality
+
+variables:
+  DOTNET_VERSION: "4.0.30319"  # .NET Framework 4.0 version
+
+before_script:
+#  - choco install -y dotnet4.0 --version 4.0.30319 # Installing .NET Framework 4.0 using Chocolatey
+- echo "Hi Hello"
+
+build_job:
+  stage: build
+  tags:
+    - Windows_Without_Docker
+  only:
+    - master  
+  #variables:
+  #  GIT_DEPTH: 1  
+  script:
+   # - dotnet --version
+   # - dotnet restore  # Restoring NuGet packages
+   - MSBuild.exe "Luminous.csproj" /t:Build /p:Configuration=Release /p:Platform="AnyCPU" # Building the application targeting .NET Framework 4.0
+   - MSBuild.exe "Test/Test.csproj" /t:Build /p:Configuration=Release /p:Platform="AnyCPU"
+   - Compress-Archive -Path "C:\\GitLab-Runner\\builds\\42sthgNk\\0\\root\\Luminous_Mpartner_DotNet\\Test\\bin\\" -Destination Luminous_Mpartner_DotNet_Test.zip
+   - Compress-Archive -Path "C:\\GitLab-Runner\\builds\\42sthgNk\\0\\root\\Luminous_Mpartner_DotNet\\bin\\" -Destination Luminous_Mpartner_DotNet.zip
+    # Additional build steps if needed
+  artifacts:
+    #expire_in: 1 week  # save gitlab server space, we copy the files we need to deploy folder later on
+    paths:
+      #- '$env:EXE_RELEASE_FOLDER\Luminous.exe'  # saving exe to copy to deploy folder
+      #- '$env:MSI_RELEASE_FOLDER\Luminous_Setup.msi'  # saving msi to copy to deploy folder
+      #- '$env:TEST_FOLDER\'  # saving entire Test project so NUnit can run tests
+       - Luminous_Mpartner_DotNet.zip
+       - Luminous_Mpartner_DotNet_Test.zip
+  allow_failure: true      
+
+master-quality:
+  stage: quality    
+  tags: 
+    - Windows_Without_Docker
+  only:
+    - master
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Luminous_Mpartner_DotNet"
+    GIT_DEPTH: 1 
+  script:
+   # - "dotnet tool install --global dotnet-sonarscanner"
+    #- "set PATH=\"%PATH%;%USERPROFILE%\\.dotnet\\tools\""
+    #- MSBuild.exe "Test//Test.csproj" /t:Build /p:Configuration=Release /p:Platform="AnyCPU"
+    #- MsTest.exe /testcontainer:"C:\\GitLab-Runner\\builds\\42sthgNk\\0\\root\\Luminous_Mpartner_DotNet\\Test\\bin\\Release\\Test.dll" /resultsfile:"TestResults.trx"
+    - "C:\\Projects\\sonar-scanner-msbuild-4.5.0.1761-net46\\SonarScanner.MSBuild.exe begin /k:\"root_Luminous_Mpartner_DotNet_AYh_vjMeI6E8iHaPw3QW\" /d:sonar.login=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" /d:sonar.cs.vstest.reportsPaths=\"TestResults.trx\""
+    - MSBuild.exe /t:Rebuild
+    - "C:\\Projects\\sonar-scanner-msbuild-4.5.0.1761-net46\\SonarScanner.MSBuild.exe end /d:sonar.login=\"$SONAR_TOKEN\""
+  allow_failure: true  
+sit1_test_job:
+  stage: test
+  tags:
+    - Windows_Without_Docker
+  only:
+    - sit1
+  script:
+    - echo "under sit1 Test"
+uat1_test_job:
+  stage: test
+  tags:
+    - Windows_Without_Docker
+  only:
+    - uat1
+  script:
+    - echo "under uat1 Test"
+preprod1_test_job:
+  stage: test
+  tags:
+    - Windows_Without_Docker
+  only:
+    - preprod1
+  script:
+    - echo "under preprod1 Test"
+master_test_job:
+  stage: test
+  tags:
+    - Windows_Without_Docker
+  only:
+    - master
+  script:
+  #  - npm install
+  #  - npm test
+     - echo "under master testing "
+     - MSBuild.exe "Test//Test.csproj" /t:Build /p:Configuration=Release /p:Platform="AnyCPU"
+     - MsTest.exe /testcontainer:"C:\\GitLab-Runner\\builds\\42sthgNk\\0\\root\\Luminous_Mpartner_DotNet\\Test\\bin\\Release\\Test.dll" /resultsfile:"TestResults.trx"
+  artifacts:
+    #expire_in: 1 week  # save gitlab server space, we copy the files we need to deploy folder later on
+    paths: 
+     - TestResults.trx 
