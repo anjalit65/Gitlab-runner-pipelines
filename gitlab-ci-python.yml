@@ -1,0 +1,76 @@
+stages:
+  - build
+  - test
+  - quality
+  - deploy
+
+master-build:
+ stage: build  
+ tags: 
+  - My_Python_Runner
+ only: 
+  - master
+ script:
+  - python2 --version
+  - sudo apt -y install zip
+  - zip -r Assurant_Servinsur_Python.zip ./*
+ artifacts:
+  paths:
+    - Assurant_Servinsur_Python.zip
+
+master-quality:
+  stage: quality    
+  tags: 
+    - Sonar
+  only:
+    - master
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Assurant_Servinsur_Python"
+  script:
+    - echo "Sonar started"
+    - sonar-scanner -Dsonar.python.coverage.reportPaths=coverage.xml
+    - echo "Sonar finished"
+
+master-test: 
+  stage: test  
+  tags:
+    - My_Python_Runner
+  only:
+    - master
+  script:
+    - echo "Testing started"
+    - sudo pip2 install coverage
+    - sudo python2 -m coverage run -m unittest discover -s tests -p 'test_*.py'
+    - sudo python2 -m coverage xml -o coverage.xml
+    - sudo chmod 777 coverage.xml
+    #- sudo apt -y install zip
+    #- sudo zip -r Assurant_Servinsur_Python_codecoverage.zip codecoverage/coverage.xml
+    - echo "Testing finished"
+  artifacts:
+    paths:
+      - coverage.xml
+
+master-deploy:
+  stage: deploy
+  tags:
+    - My_Python_Runner
+  only:
+    - master
+  script:
+    - sudo apt update
+    - sudo apt -y install openssh-client telnet
+    - sudo apt show pkg openssh-client
+    - eval $(ssh-agent -s)
+    - chmod 400 "$DEPLOYMENT_PRIVATE_KEY"
+    - ssh-add "$DEPLOYMENT_PRIVATE_KEY"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - scp -o "StrictHostKeyChecking=no" -i "$DEPLOYMENT_PRIVATE_KEY" -v Assurant_Servinsur_Python.zip gitlab_runner@172.31.19.55:/home/gitlab_runner
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'if [ -d "/home/gitlab_runner/Assurant_Servinsur_Python" ]; then
+        rm -rf "/home/gitlab_runner/Assurant_Servinsur_Python";
+      fi'
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'cd /home/gitlab_runner/ | mkdir Assurant_Servinsur_Python | unzip Assurant_Servinsur_Python.zip -d /home/gitlab_runner/Assurant_Servinsur_Python/'
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'cd /home/gitlab_runner/Assurant_Servinsur_Python | python2 apiapp.py'
+  environment: production
