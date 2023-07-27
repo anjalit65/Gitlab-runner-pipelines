@@ -1,0 +1,242 @@
+image: node:14.17.3-buster-slim
+
+stages:          # List of stages for jobs, and their order of execution
+  - build
+  - quality
+  - test
+  - deploy
+
+# build stage for different env:
+
+sit1-build-job:
+  stage: build
+  tags:
+     - Docker
+  only:
+    - sit1
+  script:
+    # - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash'
+    # - sudo sh -c "echo 'export NVM_DIR=\"/usr/local/nvm\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/bash_completion\" ] && \\. \"$NVM_DIR/bash_completion\"' >> /etc/profile" 
+    # - source /etc/profile
+    # - nvm install 14.17.3
+    # - nvm use 14.17.3  
+
+    - apt update
+    - apt -y install zip
+    - npm install -g @angular/cli@14.2.9
+    - npm install
+    - ng build --prod
+    - pwd
+    - zip -r Assurant_Servinsur_Angular.zip dist/*
+  artifacts:
+    paths:
+      - Assurant_Servinsur_Angular.zip
+
+uat1-build-job:
+  stage: build
+  tags:
+     - Docker
+  only:
+    - uat1
+  script:
+    # - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash'
+    # - sudo sh -c "echo 'export NVM_DIR=\"/usr/local/nvm\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/bash_completion\" ] && \\. \"$NVM_DIR/bash_completion\"' >> /etc/profile" 
+    # - source /etc/profile
+    # - nvm install 14.17.3
+    # - nvm use 14.17.3  
+    - apt update
+    - apt -y install zip
+    - npm install -g @angular/cli@14.2.9
+    - npm install
+    - ng build --prod
+    - pwd
+    - zip -r Assurant_Servinsur_Angular.zip dist/*
+  artifacts:
+    paths:
+      - Assurant_Servinsur_Angular.zip
+
+preprod1-build-job:
+  stage: build
+  tags:
+     - Docker
+  only:
+    - preprod1
+  script:
+    # - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash'
+    # - sudo sh -c "echo 'export NVM_DIR=\"/usr/local/nvm\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/bash_completion\" ] && \\. \"$NVM_DIR/bash_completion\"' >> /etc/profile" 
+    # - source /etc/profile
+    # - nvm install 14.17.3
+    # - nvm use 14.17.3  
+    - apt update
+    - apt -y install zip
+    - npm install -g @angular/cli@14.2.9
+    - npm install
+    - ng build --prod
+    - pwd
+    - zip -r Assurant_Servinsur_Angular.zip dist/*
+  artifacts:
+    paths:
+      - Assurant_Servinsur_Angular.zip
+
+master-build-job:
+  stage: build
+  tags:
+     - Docker
+  only:
+    - master
+  script:
+    # - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash'
+    # - sudo sh -c "echo 'export NVM_DIR=\"/usr/local/nvm\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"' >> /etc/profile"
+    # - sudo sh -c "echo '[ -s \"$NVM_DIR/bash_completion\" ] && \\. \"$NVM_DIR/bash_completion\"' >> /etc/profile" 
+    # - source /etc/profile
+    # - nvm install 14.17.3
+    # - nvm use 14.17.3  
+    - apt update
+    - apt -y install zip
+    - npm install -g @angular/cli@14.2.9
+    - npm install
+    - ng build --prod
+    - pwd
+    - zip -r Assurant_Servinsur_Angular.zip dist/*
+  artifacts:
+    paths:
+      - Assurant_Servinsur_Angular.zip
+
+# Quality stage for different env:
+
+sit1_sonarqube_analysis_job:
+  stage: quality
+  tags:
+    - Sonar
+  only:
+    - sit1
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Assurant_Servinsur_Angular"
+    GIT_DEPTH: "0"
+  script:
+    - sonar-scanner
+  allow_failure: true
+
+uat1_sonarqube_analysis_job:
+  stage: quality
+  tags:
+    - Sonar
+  only:
+    - uat1
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Assurant_Servinsur_Angular"
+  script:
+    - sonar-scanner
+
+preprod1_sonarqube_analysis_job:
+  stage: quality
+  tags:
+    - Sonar
+  only:
+    - preprod1
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Assurant_Servinsur_Angular"
+  script:
+    - sonar-scanner
+
+master_sonarqube_analysis_job:
+  stage: quality
+  tags:
+    - Sonar
+  only:
+    - master
+  variables:
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_NAME: "Assurant_Servinsur_Angular"
+    GIT_DEPTH: "0"
+  script:
+    #- npm run test -- --code-coverage
+    - sonar-scanner 
+  allow_failure: true
+
+
+# Test stage for different env:
+
+sit1_test_job:
+  stage: test
+  tags:
+    - GITLAB_NODE
+  only:
+    - sit1
+  variables:
+    DISPLAY: 0  
+  script:
+    - npm install
+    - npm test
+
+uat1_test_job:
+  stage: test
+  tags:
+    - GITLAB_NODE
+  only:
+    - uat1
+  script:
+    - npm install 
+    - npm test
+
+preprod1_test_job:
+  stage: test
+  tags:
+    - GITLAB_NODE
+  only:
+    - preprod1
+  script:
+    - npm install 
+    - npm test
+
+master_test_job:
+  stage: test
+  tags:
+    - GITLAB_NODE
+  only:
+    - master
+  variables:
+    CHROME_BIN: /usr/bin/google-chrome
+    DISPLAY: 0
+  script:
+  #  - npm install
+  #  - npm test
+     - echo "Testing Commented"
+# Deploy stage for different env:
+
+deploy-prod:
+  stage: deploy
+  tags:
+    - Docker
+  only:
+    - master
+  script:
+    - apt-get update
+    - apt-get -y install openssh-client
+    - apt show pkg openssh-client
+    - eval $(ssh-agent -s)
+    - chmod 400 "$DEPLOYMENT_PRIVATE_KEY"
+    - ssh-add "$DEPLOYMENT_PRIVATE_KEY"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - scp -o "StrictHostKeyChecking=no" -i "$DEPLOYMENT_PRIVATE_KEY" -v Assurant_Servinsur_Angular.zip gitlab_runner@172.31.19.55:/home/gitlab_runner
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'if [ -d "/home/gitlab_runner/Assurant_Servinsur_Angular" ]; then
+        rm -rf "/home/gitlab_runner/Assurant_Servinsur_Angular";
+      fi'
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'cd /home/gitlab_runner/ | mkdir Assurant_Servinsur_Angular | unzip Assurant_Servinsur_Angular.zip -d /home/gitlab_runner/Assurant_Servinsur_Angular/'
+    - ssh -i "$DEPLOYMENT_PRIVATE_KEY" gitlab_runner@172.31.19.55 'sudo service nginx start --force'
+  environment: production
